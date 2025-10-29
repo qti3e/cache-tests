@@ -46,9 +46,17 @@ function continueHandleTest (uuid, request, response, requests, serverState) {
   const interimResponses = reqConfig.interim_responses || []
   for (const [status, headers = []] of interimResponses) {
     if (status === 102) {
-      response.writeProcessing()
+      if (typeof response.writeProcessing === 'function') {
+        response.writeProcessing()
+      } else {
+        console.log('WARN: writeProcessing() not supported in this runtime')
+      }
     } else if (status === 103) {
-      response.writeEarlyHints(Object.fromEntries(headers))
+      if (typeof response.writeEarlyHints === 'function') {
+        response.writeEarlyHints(Object.fromEntries(headers))
+      } else {
+        console.log('WARN: writeEarlyHints() not supported in this runtime')
+      }
     } else {
       console.log(`ERROR: Sending ${status} is not yet supported`)
     }
@@ -66,7 +74,7 @@ function continueHandleTest (uuid, request, response, requests, serverState) {
       httpStatus = [304, 'Not Modified']
     }
     if (httpStatus[0] !== 304) {
-      httpStatus = [999, '304 Not Generated']
+      httpStatus = [500, '304 Not Generated']
     }
   }
   response.statusCode = httpStatus[0]
